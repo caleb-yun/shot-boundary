@@ -2,9 +2,11 @@
 
 import cv2
 import numpy as np
+from tqdm import tqdm
 
-def calcShots(filename):
+def calc_shotlist(filename):
     video = cv2.VideoCapture(filename)
+    total_frames = int(video.get(cv2.CAP_PROP_FRAME_COUNT))
     frame_diffs = []
     shot_list = []  # list of tuples (start, len)
 
@@ -12,7 +14,10 @@ def calcShots(filename):
     curr_frame = None
     prev_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2LAB)  # LAB color space
     success, frame = video.read()
-    
+
+    # create tqdm progress bar
+    pbar = tqdm(desc=filename, total=total_frames-1)
+
     # calculate diffs between each frame
     while success:
         curr_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2LAB)
@@ -27,9 +32,10 @@ def calcShots(filename):
 
         prev_frame = curr_frame
         success, frame = video.read()
-    video.release()
 
-    print(len(frame_diffs))
+        pbar.update(1)
+    video.release()
+    pbar.close()
 
     # process diffs in 17 (8+1+8) frame window
     # look at prev 8 and next 8 frames
